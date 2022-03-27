@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Raspberry Pi Socket.io Express Xbee Arduino</title>
+    <style>
+        .button {
+            padding: 10px 20px;
+            font-size: 20px;
+            text-align: center;
+            cursor: pointer;
+            outline: none;
+            background-color: #7a7895;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 9px  #9408d4;
+        }
+
+        .button:hover {background-color: #758375}
+
+        .button:active {
+            background-color: #3e8e41;
+            box-shadow: 0 5px #666;
+            transform: translateY(4px);
+        }
+
+
+    </style>
+</head>
+
+<body>
+    <!-- <button class='button' id='forward' onclick="forward()">Foward</button> -->
+    <button class='button' id='CW'>CW - Click n Hold</button>
+    <button class='button' id='CCW'>CCW - Click n Hold</button>
+    <script src="js/socket.io.js"></script>
+
+    <script>
+        var socket = io();
+        socket.on('updateClient', data => {
+        });
+
+        function write(data){
+            console.log(`write function ${data}`);
+            socket.emit('write', data);
+        }
+
+        let item = document.querySelector("#CW");
+        let item1 = document.querySelector("#CCW");
+
+        let timerID;
+        let counter = 0;
+
+        let pressHoldEvent = new CustomEvent("pressHold");
+
+        // Increase or decreae value to adjust how long
+        // one should keep pressing down before the pressHold
+        // event fires
+        let pressHoldDuration = 50;
+
+        // Listening for the mouse and touch events    
+        item.addEventListener("mousedown", pressingDown, false);
+        item.addEventListener("mouseup", notPressingDown, false);
+        item.addEventListener("mouseleave", notPressingDown, false);
+
+        item.addEventListener("touchstart", pressingDown, false);
+        item.addEventListener("touchend", notPressingDown, false);
+
+        // Listening for our custom pressHold event
+        item.addEventListener("pressHold", cw, false);
+
+        function pressingDown(e) {
+            // Start the timer
+            requestAnimationFrame(timer);
+
+            e.preventDefault();
+
+            console.log("Pressing!");
+        }
+
+        function notPressingDown(e) {
+        // Stop the timer
+            cancelAnimationFrame(timerID);
+            counter = 0;
+
+            console.log("Not pressing!");
+            write("!stop")
+        }
+
+        function timer() {
+            console.log("Timer tick!");
+
+            if (counter < pressHoldDuration) {
+                timerID = requestAnimationFrame(timer);
+                counter++;
+            } else {
+                console.log("Press threshold reached!");
+                item.dispatchEvent(pressHoldEvent);
+            }
+        }
+
+        function cw(e) {
+            console.log("pressHold event fired! by...");
+            write('#cw');
+        }
+
+    </script>
+</body>
+
+</html>
